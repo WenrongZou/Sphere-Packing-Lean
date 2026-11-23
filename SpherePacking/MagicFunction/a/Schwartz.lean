@@ -185,7 +185,7 @@ def a' : 𝓢(ℝ, ℂ) :=
 def a : 𝓢(EuclideanSpace ℝ (Fin 8), ℂ) := schwartzMap_multidimensional_of_schwartzMap_real
   (EuclideanSpace ℝ (Fin 8)) a'
 
-theorem coe_a' : ⇑a' = MagicFunction.a.RealIntegrals.a' := rfl
+theorem coe_a' : a' = MagicFunction.a.RealIntegrals.a' := rfl
 
 theorem a_apply (x : EuclideanSpace ℝ (Fin 8)) :
     a x = MagicFunction.a.RealIntegrals.a' (‖x‖ ^ 2) := rfl
