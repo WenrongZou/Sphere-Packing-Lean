@@ -10,16 +10,13 @@ public import SpherePacking.MagicFunction.b.Schwartz
 /-!
 # Double zeroes of `b`
 
-Blueprint `prop:b-double-zeros`: for `r > √2`,
-`b(r) = -4i sin(π r² / 2)² ∫₀^∞ ψ_I(it) e^{-π r² t} dt`.
-In the radial statements `r` is the squared radius `‖x‖²`, as in `MagicFunction.b.RealIntegrals.b'`.
+For `r > 2`, `b(r) = -4i sin(π r / 2)² ∫₀^∞ ψ_I(it) e^{-π r t} dt`, where `r` is the squared
+radius `‖x‖²`.
 -/
 
 @[expose] public section
 
 open Set MeasureTheory Real Complex
-
-local notation "ℝ⁸" => EuclideanSpace ℝ (Fin 8)
 
 namespace MagicFunction.b.AnalyticContinuation
 
@@ -32,12 +29,11 @@ theorem b'_eq_neg_four_mul_I_mul_sin_sq_mul_integral {r : ℝ} (hr : 2 < r) :
       ∫ t in Ioi (0 : ℝ), ψI' (I * t) * cexp (-π * r * t) := by
   sorry
 
-theorem b_eq_neg_four_mul_I_mul_sin_sq_mul_integral {x : ℝ⁸} (hx : √2 < ‖x‖) :
+theorem b_eq_neg_four_mul_I_mul_sin_sq_mul_integral {x : EuclideanSpace ℝ (Fin 8)} (hx : √2 < ‖x‖) :
     MagicFunction.FourierEigenfunctions.b x = -4 * I * (Real.sin (π * ‖x‖ ^ 2 / 2) : ℂ) ^ 2 *
       ∫ t in Ioi (0 : ℝ), ψI' (I * t) * cexp (-π * ‖x‖ ^ 2 * t) := by
-  change MagicFunction.b.RealIntegrals.b' (‖x‖ ^ 2) = _
-  rw [b'_eq_neg_four_mul_I_mul_sin_sq_mul_integral (Real.lt_sq_of_sqrt_lt hx)]
-  push_cast
-  rfl
+  rw [MagicFunction.FourierEigenfunctions.b_apply,
+    b'_eq_neg_four_mul_I_mul_sin_sq_mul_integral (Real.lt_sq_of_sqrt_lt hx)]
+  norm_num
 
 end MagicFunction.b.AnalyticContinuation
