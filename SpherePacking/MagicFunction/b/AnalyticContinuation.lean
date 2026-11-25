@@ -19,7 +19,8 @@ Both follow from `MagicFunction.DoubleZeroes` with `ψ = ψ_I`.
 
 @[expose] public section
 
-open Set MeasureTheory Real Complex MagicFunction.Parametrisations MagicFunction.DoubleZeroes
+open Set Filter Asymptotics MeasureTheory Real Complex MagicFunction.Parametrisations
+  MagicFunction.DoubleZeroes
 
 namespace MagicFunction
 
@@ -38,17 +39,32 @@ lemma differentiableOn_ψI' : DifferentiableOn ℂ ψI' {z | 0 < z.im} := by
 lemma integrableOn_ψI'_Ioc : IntegrableOn (fun t : ℝ ↦ ψI' (I * t)) (Ioc 0 1) := by
   sorry
 
-lemma norm_ψI'_sub_le : ∃ K, ∀ z : ℂ, 1 ≤ z.im → |z.re| ≤ 1 →
-    ‖ψI' z - (144 + cexp (-2 * π * I * z))‖ ≤ K * rexp (-π * z.im) := by
+lemma ψI'_isBigO_exp :
+    ψI' =O[comap im atTop ⊓ 𝓟 {z | |z.re| ≤ 1}] fun z ↦ rexp (2 * π * z.im) := by
   sorry
 
-lemma expansion_ψI' (z : ℂ) :
-    expansion 1 (fun k ↦ if k = 0 then 144 else 1) 0 z = 144 + cexp (-2 * π * I * z) := by
+lemma ψI'_I_mul_sub_isBigO :
+    (fun t : ℝ ↦ ψI' (I * t) - (144 + cexp (2 * π * t))) =O[atTop] fun t ↦ rexp (-π * t) := by
+  sorry
+
+lemma ψS'_I_mul_isBigO : (fun t : ℝ ↦ ψS' (I * t)) =O[atTop] fun t ↦ rexp (-π * t) := by
+  sorry
+
+lemma expansion_ψI' (t : ℝ) :
+    expansion 1 (fun k ↦ if k = 0 then 144 else 1) 0 t = 144 + cexp (2 * π * t) := by
   simp [expansion, Finset.sum_range_succ]
 
-lemma norm_ψI'_sub_expansion_le : ∃ K, ∀ z : ℂ, 1 ≤ z.im → |z.re| ≤ 1 →
-    ‖ψI' z - expansion 1 (fun k ↦ if k = 0 then 144 else 1) 0 z‖ ≤ K * rexp (-π * z.im) := by
-  simpa only [expansion_ψI'] using norm_ψI'_sub_le
+lemma ψI'_I_mul_sub_expansion_isBigO :
+    (fun t : ℝ ↦ ψI' (I * t) - expansion 1 (fun k ↦ if k = 0 then 144 else 1) 0 t)
+      =O[atTop] fun t ↦ rexp (-π * t) := by
+  simpa only [expansion_ψI'] using ψI'_I_mul_sub_isBigO
+
+lemma ψI'_second_difference_isBigO :
+    (fun t : ℝ ↦ ψI' (I * t + 1) - 2 * ψI' (I * t) + ψI' (I * t - 1))
+      =O[atTop] fun t ↦ rexp (-π * t) :=
+  (ψS'_I_mul_isBigO.const_mul_left (-2)).congr_left fun t ↦ by
+    rw [← ψT'_eq_ψI'_add_one, ← ψT'_eq_ψI'_sub_one, ψI'_eq_ψT'_add_ψS' (I * t)]
+    ring
 
 lemma b'_eq_contourSum (r : ℝ) : b.RealIntegrals.b' r = contourSum ψI' r := by
   have h6 : b.RealIntegrals.J₆' r = ∫ t in Ici (1 : ℝ),
@@ -87,7 +103,7 @@ theorem b'_eq_neg_four_mul_I_mul_sin_sq_mul_integral {r : ℝ} (hr : 2 < r) :
     b.RealIntegrals.b' r = -4 * I * (Real.sin (π * r / 2) : ℂ) ^ 2 *
       ∫ t in Ioi (0 : ℝ), ψI' (I * t) * cexp (-π * r * t) := by
   rw [b'_eq_contourSum, ← neg_four_mul_sin_sq_mul_integral_eq differentiableOn_ψI'
-    integrableOn_ψI'_Ioc pi_pos norm_ψI'_sub_expansion_le (by norm_num; linarith)]
+    integrableOn_ψI'_Ioc ψI'_isBigO_exp hr]
   have h (t : ℝ) : I * (ψI' (I * t) * cexp (π * I * r * (I * t))) =
       I * (ψI' (I * t) * cexp (-π * r * t)) := by
     rw [show π * I * r * (I * t) = -π * r * t by linear_combination (π * r * t : ℂ) * I_sq]
@@ -112,12 +128,12 @@ theorem b'_eq_another_integral {r : ℝ} (hr : 0 ≤ r) :
       (144 / (π * r) + 1 / (π * (r - 2)) +
         ∫ t in Ioi (0 : ℝ), (ψI' (I * t) - 144 - cexp (2 * π * t)) * cexp (-π * r * t)) := by
   rw [b'_eq_contourSum, ← neg_four_mul_sin_sq_mul_continuation_eq differentiableOn_ψI'
-    integrableOn_ψI'_Ioc pi_pos norm_ψI'_sub_expansion_le ?_ (fun _ _ _ ↦ rfl)]
-  · have h (t : ℝ) : I * ((ψI' (I * t) - expansion 1 (fun k ↦ if k = 0 then 144 else 1) 0
-        (I * t)) * cexp (π * I * r * (I * t))) =
+    integrableOn_ψI'_Ioc ψI'_isBigO_exp pi_pos ψI'_I_mul_sub_expansion_isBigO
+    ψI'_second_difference_isBigO ?_ (fun _ _ _ ↦ rfl)]
+  · have h (t : ℝ) : I * ((ψI' (I * t) - expansion 1 (fun k ↦ if k = 0 then 144 else 1) 0 t)
+        * cexp (π * I * r * (I * t))) =
         I * ((ψI' (I * t) - 144 - cexp (2 * π * t)) * cexp (-π * r * t)) := by
       rw [expansion_ψI',
-        show -2 * π * I * (I * t) = 2 * π * t by linear_combination (-2 * π * t : ℂ) * I_sq,
         show π * I * r * (I * t) = -π * r * t by linear_combination (π * r * t : ℂ) * I_sq]
       ring
     simp_rw [h, integral_const_mul]

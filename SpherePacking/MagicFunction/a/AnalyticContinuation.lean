@@ -20,7 +20,8 @@ with `ψ(z) = φ₀(-1/z) z²`.
 
 @[expose] public section
 
-open Set MeasureTheory Real Complex MagicFunction.Parametrisations MagicFunction.DoubleZeroes
+open Set Filter Asymptotics MeasureTheory Real Complex MagicFunction.Parametrisations
+  MagicFunction.DoubleZeroes
 
 namespace MagicFunction
 
@@ -33,15 +34,24 @@ lemma integrableOn_φ₀''_neg_inv_mul_sq :
     IntegrableOn (fun t : ℝ ↦ φ₀'' (-1 / (I * t)) * (I * t) ^ 2) (Ioc 0 1) := by
   sorry
 
-lemma norm_φ₀''_neg_inv_mul_sq_sub_le : ∃ K, ∀ z : ℂ, 1 ≤ z.im → |z.re| ≤ 1 →
-    ‖φ₀'' (-1 / z) * z ^ 2 - (-36 / π ^ 2 * cexp (-2 * π * I * z) - 8640 / π * I * z
-      - 18144 / π ^ 2)‖ ≤ K * rexp (-π * z.im) := by
+lemma φ₀''_neg_inv_mul_sq_isBigO_exp :
+    (fun z ↦ φ₀'' (-1 / z) * z ^ 2) =O[comap im atTop ⊓ 𝓟 {z | |z.re| ≤ 1}]
+      fun z ↦ rexp (2 * π * z.im) := by
   sorry
 
-lemma expansion_φ₀'' (z : ℂ) :
+/-- Viazovska (39). -/
+lemma sq_mul_φ₀''_I_div_sub_isBigO :
+    (fun t : ℝ ↦ t ^ 2 * φ₀'' (I / t) - (36 / π ^ 2 * cexp (2 * π * t) - 8640 / π * t
+      + 18144 / π ^ 2)) =O[atTop] fun t ↦ t ^ 2 * rexp (-2 * π * t) := by
+  sorry
+
+lemma φ₀''_I_mul_isBigO : (fun t : ℝ ↦ φ₀'' (I * t)) =O[atTop] fun t ↦ rexp (-2 * π * t) := by
+  sorry
+
+lemma expansion_φ₀'' (t : ℝ) :
     expansion 1 (fun k ↦ if k = 0 then -18144 / π ^ 2 else -36 / π ^ 2)
-      (fun k ↦ if k = 0 then 8640 / π else 0) z =
-      -36 / π ^ 2 * cexp (-2 * π * I * z) - 8640 / π * I * z - 18144 / π ^ 2 := by
+      (fun k ↦ if k = 0 then 8640 / π else 0) t =
+      -(36 / π ^ 2 * cexp (2 * π * t) - 8640 / π * t + 18144 / π ^ 2) := by
   simp [expansion, Finset.sum_range_succ]
   ring
 
@@ -72,23 +82,37 @@ theorem a'_eq_another_integral {r : ℝ} (hr : 0 < r) :
   have hψ : DifferentiableOn ℂ (fun z ↦ φ₀'' (-1 / z) * z ^ 2) {z | 0 < z.im} := by
     simpa only [Pi.mul_def, add_zero] using
       (a.ComplexIntegrands.φ₀''_neg_inv_add_holo (c := 0) (by simp)).mul (differentiableOn_pow 2)
-  have hexp := norm_φ₀''_neg_inv_mul_sq_sub_le
-  simp_rw [← expansion_φ₀''] at hexp
+  have hI (t : ℝ) : -1 / (I * t) = I / t := by rw [mul_comm I, ← div_div, div_I]; ring
+  have hpoly : (fun t : ℝ ↦ t ^ 2 * rexp (-2 * π * t)) =O[atTop] fun t ↦ rexp (-π * t) := by
+    refine ((isLittleO_pow_exp_pos_mul_atTop 2 pi_pos).isBigO.mul
+      (isBigO_refl (fun t : ℝ ↦ rexp (-2 * π * t)) atTop)).congr_right fun t ↦ ?_
+    rw [← Real.exp_add]
+    ring_nf
+  have hexp2 : (fun t : ℝ ↦ rexp (-2 * π * t)) =O[atTop] fun t ↦ rexp (-π * t) := by
+    refine IsBigO.of_bound 1 ?_
+    filter_upwards [eventually_ge_atTop 0] with t ht
+    simp only [norm_eq_abs, abs_exp, one_mul]
+    exact exp_le_exp.mpr (by nlinarith [pi_pos])
   rw [a'_eq_contourSum, ← neg_four_mul_sin_sq_mul_continuation_eq hψ
-    integrableOn_φ₀''_neg_inv_mul_sq pi_pos hexp ?_ ?_]
-  · have h (t : ℝ) : I * ((φ₀'' (-1 / (I * t)) * (I * t) ^ 2 - expansion 1
-        (fun k ↦ if k = 0 then -18144 / π ^ 2 else -36 / π ^ 2)
-        (fun k ↦ if k = 0 then 8640 / π else 0) (I * t)) * cexp (π * I * r * (I * t))) =
+    integrableOn_φ₀''_neg_inv_mul_sq φ₀''_neg_inv_mul_sq_isBigO_exp pi_pos (n := 1)
+    (a := fun k ↦ if k = 0 then -18144 / π ^ 2 else -36 / π ^ 2)
+    (b := fun k ↦ if k = 0 then 8640 / π else 0) ?_ ?_ ?_ ?_]
+  · have h (t : ℝ) : I * ((φ₀'' (-1 / (I * t)) * (I * t) ^ 2 - -(36 / π ^ 2 * cexp (2 * π * t)
+        - 8640 / π * t + 18144 / π ^ 2)) * cexp (π * I * r * (I * t))) =
         -I * ((t ^ 2 * φ₀'' (I / t) - 36 / π ^ 2 * cexp (2 * π * t) + 8640 / π * t
           - 18144 / π ^ 2) * cexp (-π * r * t)) := by
-      rw [expansion_φ₀'', show -1 / (I * t) = I / t by rw [mul_comm I, ← div_div, div_I]; ring,
-        show -2 * π * I * (I * t) = 2 * π * t by linear_combination (-2 * π * t : ℂ) * I_sq,
-        show π * I * r * (I * t) = -π * r * t by linear_combination (π * r * t : ℂ) * I_sq]
-      linear_combination I * cexp (-π * r * t) * (φ₀'' (I / t) * t ^ 2 + 8640 / π * t) * I_sq
-    simp_rw [h, integral_const_mul]
+      rw [hI, show π * I * r * (I * t) = -π * r * t by linear_combination (π * r * t : ℂ) * I_sq]
+      linear_combination I * cexp (-π * r * t) * φ₀'' (I / t) * t ^ 2 * I_sq
+    simp_rw [expansion_φ₀'', h, integral_const_mul]
     simp only [Finset.sum_range_succ, Finset.sum_range_zero, div_eq_mul_inv, mul_inv]
     norm_num
     ring
+  · refine (sq_mul_φ₀''_I_div_sub_isBigO.trans hpoly).neg_left.congr_left fun t ↦ ?_
+    rw [expansion_φ₀'', hI]
+    linear_combination (-(t : ℂ) ^ 2 * φ₀'' (I / t)) * I_sq
+  · refine ((φ₀''_I_mul_isBigO.trans hexp2).const_mul_left 2).congr' ?_ EventuallyEq.rfl
+    filter_upwards [eventually_gt_atTop 0] with t ht
+    exact (φ₀''_second_difference (by simpa using ht)).symm
   · rw [neg_div, div_self pi_ne_zero]
     linarith
   · intro k hk hrk
