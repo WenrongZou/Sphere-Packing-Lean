@@ -186,7 +186,7 @@ By absolute convergence, the product expands as a Cauchy product: the coefficien
 
 As corollaries, we have the following bounds for $\phi_0$, $\phi_{-2}$, and $\phi_{-4}$.
 
-\begin{corollary}\label{cor:phi0-bound}\uses{thm:ramanujan-formula, lemma:mod-div-disc-bound, lemma:Ek-Fourier, lemma:mod_form_poly_growth, lemma:poly-growth-mul}
+\begin{corollary}\label{cor:phi0-bound}\uses{thm:ramanujan-formula, lemma:mod-div-disc-bound, lemma:Ek-Fourier, lemma:mod_form_poly_growth, lemma:poly-growth-mul}\lean{MagicFunction.PolyFourierCoeffBound.norm_φ₀_le}\leanok
 There exists a constant $C_0 > 0$ such that
 \begin{equation}\label{eqn:phi0-bound}
 |\phi_0(z)| \le C_0 e^{-2 \pi \Im z}
@@ -422,7 +422,7 @@ Apply the Cauchy--Goursat theorem for rectangles to the truncated rectangles $\{
 
 Using \eqref{eqn:phi0-bound}, \eqref{eqn:phi2-bound}, and \eqref{eqn:phi4-bound}, we can control the behavior of $\phi_0$ near $0$ and $i\infty$.
 
-\begin{corollary}\label{cor:phi0-near-0-infty}\uses{cor:phi0-bound, cor:phi2-bound, cor:phi4-bound, lemma:phi0-transform}
+\begin{corollary}\label{cor:phi0-near-0-infty}\uses{cor:phi0-bound, cor:phi2-bound, cor:phi4-bound, lemma:phi0-transform}\lean{MagicFunction.φ₀''_I_div_isBigO_nhdsGT_zero, MagicFunction.φ₀''_I_div_isBigO_atTop}\leanok
 We have
 \begin{align}
     \phi_0\left(\frac{i}{t}\right) &= O(e^{-2 \pi / t}) \quad \text{as } t \to 0 \label{eqn:phi0-near-0} \\

@@ -28,6 +28,7 @@ public import SpherePacking.MagicFunction.IntegralParametrisations
 public import SpherePacking.MagicFunction.PolyFourierCoeffBound
 public import SpherePacking.MagicFunction.a.AnalyticContinuation
 public import SpherePacking.MagicFunction.a.Basic
+public import SpherePacking.MagicFunction.a.CuspExpansion
 public import SpherePacking.MagicFunction.a.Defs
 public import SpherePacking.MagicFunction.a.Eigenfunction
 public import SpherePacking.MagicFunction.a.Integrability.ComplexIntegrands

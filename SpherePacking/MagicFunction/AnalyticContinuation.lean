@@ -12,6 +12,8 @@ public import Mathlib.Analysis.Asymptotics.Defs
 public import Mathlib.Analysis.Calculus.FDeriv.Defs
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 
+import Mathlib.MeasureTheory.Integral.Asymptotics
+
 /-!
 # Analytic continuation of Laplace transforms
 
@@ -30,7 +32,7 @@ This is used for the analytic continuation of `a` and `b`.
 
 @[expose] public section
 
-open Set Filter MeasureTheory Real Complex MagicFunction.Parametrisations Finset
+open Set Filter Topology MeasureTheory Real Complex MagicFunction.Parametrisations Finset
 
 namespace MagicFunction.DoubleZeroes
 
@@ -41,6 +43,23 @@ noncomputable def expPoly (n : ℕ) (a b : ℕ → ℂ) (t : ℝ) : ℂ :=
 @[simp] lemma expPoly_apply (n : ℕ) (a b : ℕ → ℂ) (t : ℝ) :
     expPoly n a b t = ∑ k ∈ range (n + 1), (a k + t * b k) * cexp (2 * π * k * t) :=
   rfl
+
+/-- A function continuous on `(0, ∞)` and bounded near `0` is locally integrable on `[0, ∞)`.
+This is used to verify the hypothesis `hloc` below. -/
+theorem locallyIntegrableOn_Ici_of_continuousOn_of_isBigO {f : ℝ → ℂ}
+    (hf : ContinuousOn f (Ioi 0)) (h0 : f =O[𝓝[>] 0] fun _ ↦ (1 : ℝ)) :
+    LocallyIntegrableOn f (Ici 0) := by
+  intro x hx
+  rcases (mem_Ici.1 hx).eq_or_lt with rfl | hx
+  · have h : f =O[𝓝[≥] 0] fun _ ↦ (1 : ℝ) := by
+      rw [← Set.insert_Ioi, nhdsWithin_insert]
+      exact (show f =O[pure 0] fun _ ↦ (1 : ℝ) from Asymptotics.isBigO_pure.2 (by simp)).sup h0
+    refine h.integrableAtFilter ⟨Ici 0, self_mem_nhdsWithin, ?_⟩
+      ((continuous_const.integrableAt_nhds 0).filter_mono nhdsWithin_le_nhds)
+    rw [← restrict_Ioi_eq_restrict_Ici]
+    exact hf.aestronglyMeasurable measurableSet_Ioi
+  · exact (hf.locallyIntegrableOn measurableSet_Ioi x hx).filter_mono
+      (nhdsWithin_le_nhds.trans (nhdsWithin_eq_nhds.2 (Ioi_mem_nhds hx)).ge)
 
 variable {ψ : ℂ → ℂ} {n : ℕ} {a b : ℕ → ℂ} {C : ℝ} {s : ℂ}
 

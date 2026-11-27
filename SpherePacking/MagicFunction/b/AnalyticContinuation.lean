@@ -8,6 +8,8 @@ module
 public import SpherePacking.MagicFunction.AnalyticContinuation
 public import SpherePacking.MagicFunction.b.Schwartz
 
+import SpherePacking.ModularForms.Delta
+
 /-!
 # Double zeroes of `b`
 
@@ -31,10 +33,39 @@ theorem ψI'_I_mul_isBigO_atTop :
     (fun t : ℝ ↦ ψI' (I * t)) =O[atTop] fun t ↦ rexp (2 * π * t) := by
   sorry
 
+/-- `ψ_S = -G / (2Δ)` is holomorphic on the upper half-plane. -/
+theorem ψS'_holo : DifferentiableOn ℂ ψS' {z : ℂ | 0 < z.im} := by
+  have hG := UpperHalfPlane.mdifferentiable_iff.mp G_holo
+  have hΔ := UpperHalfPlane.mdifferentiable_iff.mp CuspForm.discriminant.holo'
+  refine DifferentiableOn.congr ((hG.const_mul (-1 / 2 : ℂ)).div hΔ fun z hz ↦ ?_)
+    fun z hz ↦ ?_
+  · simp [Function.comp_apply, UpperHalfPlane.ofComplex_apply_of_im_pos hz,
+      ModularForm.discriminant_ne_zero]
+  · simp [ψS'_def hz, ψS_eq_neg_one_half_smul_G_div_disc,
+      UpperHalfPlane.ofComplex_apply_of_im_pos hz]
+
+/-- `t ↦ ψ_I(it) = ψ_S(i/t) (it)²` is continuous on `(0, ∞)`. -/
+theorem continuousOn_ψI'_I_mul : ContinuousOn (fun t : ℝ ↦ ψI' (I * t)) (Ioi 0) := by
+  have hmaps : MapsTo (fun t : ℝ ↦ -1 / (I * t)) (Ioi 0) {z : ℂ | 0 < z.im} := fun t ht ↦ by
+    simpa [div_mul_eq_div_div] using mem_Ioi.mp ht
+  have hcont : ContinuousOn (fun t : ℝ ↦ -1 / (I * t)) (Ioi 0) := by
+    fun_prop (disch := intro t ht; exact mul_ne_zero I_ne_zero (ofReal_ne_zero.mpr (ne_of_gt ht)))
+  refine ((ψS'_holo.continuousOn.comp hcont hmaps).mul
+    (by fun_prop : Continuous fun t : ℝ ↦ (I * t) ^ 2).continuousOn).congr fun t ht ↦ ?_
+  exact ψS_slash_S_explicit (z := I * t) (by simpa using ht)
+
 /-- `t ↦ ψ_I(it)` is locally integrable on `[0, ∞)`. -/
 theorem locallyIntegrableOn_ψI'_I_mul :
     LocallyIntegrableOn (fun t : ℝ ↦ ψI' (I * t)) (Ici 0) := by
-  sorry
+  refine locallyIntegrableOn_Ici_of_continuousOn_of_isBigO continuousOn_ψI'_I_mul
+    (ψI'_I_mul_isBigO_nhdsGT_zero.trans (Asymptotics.IsBigO.of_bound 1 ?_))
+  filter_upwards [Ioo_mem_nhdsGT (show (0 : ℝ) < 1 by norm_num)] with t ⟨ht0, ht1⟩
+  have h1 : t ^ 2 ≤ 1 := pow_le_one₀ ht0.le ht1.le
+  have h2 : rexp (-π / t) ≤ 1 :=
+    exp_le_one_iff.2 (div_nonpos_of_nonpos_of_nonneg (by linarith [pi_pos]) ht0.le)
+  rw [norm_mul, norm_pow, Real.norm_of_nonneg (exp_pos _).le, Real.norm_eq_abs, abs_of_pos ht0,
+    norm_one, mul_one]
+  nlinarith [exp_pos (-π / t)]
 
 theorem integrableOn_ψI'_mul_cexp {s : ℝ} (hr : 2 < s) :
     IntegrableOn (fun t : ℝ ↦ ψI' (I * t) * cexp (-π * s * t)) (Ioi 0) := by
